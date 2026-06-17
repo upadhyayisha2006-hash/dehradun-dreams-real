@@ -272,7 +272,7 @@ function PropertiesPage() {
                 variant="outline"
                 size="icon"
                 disabled={search.page <= 1}
-                onClick={() => navigate({ search: (p) => ({ ...p, page: p.page - 1 }) as never })}
+                onClick={() => navigate({ search: (p: typeof search) => ({ ...p, page: p.page - 1 }) as never })}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -283,7 +283,7 @@ function PropertiesPage() {
                     key={n}
                     size="sm"
                     variant={n === search.page ? "default" : "outline"}
-                    onClick={() => navigate({ search: (p) => ({ ...p, page: n }) as never })}
+                    onClick={() => navigate({ search: (p: typeof search) => ({ ...p, page: n }) as never })}
                     className={n === search.page ? "bg-primary" : ""}
                   >
                     {n}
@@ -294,7 +294,7 @@ function PropertiesPage() {
                 variant="outline"
                 size="icon"
                 disabled={search.page >= totalPages}
-                onClick={() => navigate({ search: (p) => ({ ...p, page: p.page + 1 }) as never })}
+                onClick={() => navigate({ search: (p: typeof search) => ({ ...p, page: p.page + 1 }) as never })}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
