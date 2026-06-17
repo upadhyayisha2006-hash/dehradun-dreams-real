@@ -41,7 +41,7 @@ function PropertiesPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const update = (patch: Record<string, unknown>) => {
-    navigate({ search: (prev) => ({ ...prev, ...patch, page: 1 }) as never });
+    navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...patch, page: 1 }) as never });
   };
 
   const filtered = useMemo(() => {

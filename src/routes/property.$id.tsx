@@ -68,7 +68,7 @@ const visitSchema = z.object({
 });
 
 function PropertyDetail() {
-  const { property } = Route.useLoaderData();
+  const { property } = Route.useLoaderData() as { property: import("@/lib/properties").Property };
   const [active, setActive] = useState(0);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", date: "", message: "" });
