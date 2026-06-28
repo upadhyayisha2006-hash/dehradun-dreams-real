@@ -1,21 +1,24 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, MapPin, Search, Sparkles, Star, TrendingUp } from "lucide-react";
+import { ArrowRight, MapPin, Search, Sparkles, Star, TrendingUp, Phone, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PropertyCard } from "@/components/site/PropertyCard";
 import { LOCATIONS, PROPERTIES } from "@/lib/properties";
+import { submitContact } from "@/lib/supabase";
 import heroImg from "@/assets/hero-dehradun.jpg";
+import companyAboutImg from "@/assets/company-about.png";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dehradun Properties — Find Your Dream Home in the Doon Valley" },
+      { title: "Dehradun Dreams Real — Find Your Dream Home in the Doon Valley" },
       {
         name: "description",
         content: "Browse verified villas, apartments and houses across Rajpur Road, Mussoorie Road, Sahastradhara and more in Dehradun.",
       },
-      { property: "og:title", content: "Dehradun Properties" },
+      { property: "og:title", content: "Dehradun Dreams Real" },
       { property: "og:description", content: "Find your dream property in Dehradun." },
     ],
   }),
@@ -47,6 +50,13 @@ function HomePage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState<string>("");
+  
+  // Contact Form State
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const featured = PROPERTIES.filter((p) => p.featured).slice(0, 6);
 
@@ -56,6 +66,28 @@ function HomePage() {
       to: "/properties",
       search: { q: query || undefined, location: location || undefined } as never,
     });
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactName || !contactEmail || !contactMessage) {
+      toast.error("Please fill in all required fields (Name, Email, Message)");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await submitContact(contactName, contactEmail, contactPhone, contactMessage);
+      toast.success("Thank you! Your message has been submitted. We will contact you shortly.");
+      setContactName("");
+      setContactEmail("");
+      setContactPhone("");
+      setContactMessage("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -216,6 +248,44 @@ function HomePage() {
         </div>
       </section>
 
+      {/* COMPANY DETAILS - ABOUT US */}
+      <section className="container-x mt-28">
+        <div className="grid gap-12 lg:grid-cols-2 items-center">
+          <div className="relative group overflow-hidden rounded-3xl shadow-glow">
+            <img
+              src={companyAboutImg}
+              alt="Dehradun Dreams Real Luxury Office"
+              className="w-full aspect-[4/3] object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+          </div>
+
+          <div>
+            <span className="text-sm font-medium text-primary uppercase tracking-wider">About Our Company</span>
+            <h2 className="mt-2 text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
+              Dehradun <span className="text-gradient-brand">Dreams Real</span>
+            </h2>
+            <p className="mt-5 text-muted-foreground leading-relaxed">
+              Founded in the heart of the Doon Valley, Dehradun Dreams Real is a premier real estate advisory firm dedicated to matching buyers with their perfect hillside sanctuaries, modern luxury villas, and smart residential spaces.
+            </p>
+            <p className="mt-4 text-muted-foreground leading-relaxed">
+              We stand apart through our commitment to transparency, digital-first listing verification, and sustainable, eco-friendly luxury living. We believe your home should be a natural extension of the breathtaking Himalayan environment.
+            </p>
+            
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="p-4 rounded-xl border border-border bg-card">
+                <h4 className="font-semibold text-foreground">100% Verified Listings</h4>
+                <p className="mt-1.5 text-sm text-muted-foreground">Every villa, plot, and flat is physically checked and legally vetted by our real estate experts.</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border bg-card">
+                <h4 className="font-semibold text-foreground">Local Expertise</h4>
+                <p className="mt-1.5 text-sm text-muted-foreground">Deeply rooted in Dehradun with decades of collective experience in local development regulations.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* AI RECOMMENDATIONS TEASER */}
       <section className="container-x mt-28">
         <div className="rounded-3xl bg-primary text-primary-foreground p-8 md:p-14 relative overflow-hidden">
@@ -266,6 +336,156 @@ function HomePage() {
               </figcaption>
             </figure>
           ))}
+        </div>
+      </section>
+
+      {/* CONTACT SECTION */}
+      <section id="contact" className="container-x mt-28 mb-20 scroll-mt-20">
+        <div className="grid gap-12 lg:grid-cols-12">
+          {/* Contact Details Column */}
+          <div className="lg:col-span-5 flex flex-col justify-between">
+            <div>
+              <p className="text-sm font-medium text-primary uppercase tracking-wider">Get In Touch</p>
+              <h2 className="mt-2 text-3xl md:text-4xl font-semibold">Contact Our Advisers</h2>
+              <p className="mt-3 text-muted-foreground leading-relaxed">
+                Have questions about a listing, zoning, or looking for a custom property search? Fill out the form or reach out directly. Our property experts are here to guide you.
+              </p>
+            </div>
+
+            <div className="mt-8 space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary shrink-0">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Our Headquarters</h4>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Suite 402, Pine Crest Tower, Rajpur Road, Dehradun, Uttarakhand 248001
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary shrink-0">
+                  <Phone className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Phone Number</h4>
+                  <p className="mt-1 text-sm text-muted-foreground hover:text-primary transition-colors">
+                    <a href="tel:+918883732637">+91 888-DREAM-DDR</a>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary shrink-0">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Email Inquiry</h4>
+                  <p className="mt-1 text-sm text-muted-foreground hover:text-primary transition-colors">
+                    <a href="mailto:contact@dehradundreams.com">contact@dehradundreams.com</a>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary shrink-0">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">Business Hours</h4>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Monday – Saturday: 9:00 AM – 7:00 PM (Sunday Closed)
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Form Column */}
+          <div className="lg:col-span-7">
+            <div className="rounded-3xl border border-border bg-card p-8 md:p-10 shadow-soft">
+              <h3 className="text-2xl font-semibold mb-6">Send Us a Message</h3>
+              <form onSubmit={handleContactSubmit} className="space-y-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label htmlFor="name" className="text-sm font-medium text-foreground">
+                      Full Name <span className="text-destructive">*</span>
+                    </label>
+                    <Input
+                      id="name"
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      placeholder="e.g. Rohan Sharma"
+                      required
+                      className="bg-background border-border focus-visible:ring-primary h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium text-foreground">
+                      Email Address <span className="text-destructive">*</span>
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      placeholder="e.g. rohan@gmail.com"
+                      required
+                      className="bg-background border-border focus-visible:ring-primary h-11"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="text-sm font-medium text-foreground">
+                    Phone Number
+                  </label>
+                  <Input
+                    id="phone"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    placeholder="e.g. +91 98765 43210"
+                    className="bg-background border-border focus-visible:ring-primary h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="message" className="text-sm font-medium text-foreground">
+                    Your Message <span className="text-destructive">*</span>
+                  </label>
+                  <textarea
+                    id="message"
+                    value={contactMessage}
+                    onChange={(e) => setContactMessage(e.target.value)}
+                    placeholder="Tell us about the property you are interested in..."
+                    required
+                    rows={4}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-border focus-visible:ring-primary"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-medium transition-all duration-200"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending message...
+                    </span>
+                  ) : (
+                    "Send Message"
+                  )}
+                </Button>
+              </form>
+            </div>
+          </div>
         </div>
       </section>
     </main>

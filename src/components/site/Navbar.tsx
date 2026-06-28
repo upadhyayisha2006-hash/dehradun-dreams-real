@@ -1,7 +1,17 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, MountainSnow, Moon, Sun, X } from "lucide-react";
+import { Menu, MountainSnow, Moon, Sun, X, User, LogOut, LayoutDashboard, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { subscribeToAuth, signOut, type UserProfile } from "@/lib/supabase";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 const NAV = [
   { to: "/", label: "Home" },
@@ -13,6 +23,8 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [dark, setDark] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -24,6 +36,23 @@ export function Navbar() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuth((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Logged out successfully");
+      navigate({ to: "/" });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to log out");
+    }
+  };
 
   return (
     <header
@@ -39,7 +68,7 @@ export function Navbar() {
             <MountainSnow className="h-5 w-5" />
           </span>
           <span className="text-lg font-semibold tracking-tight">
-            Dehradun <span className="text-primary">Properties</span>
+            Dehradun <span className="text-primary">Dreams Real</span>
           </span>
         </Link>
 
@@ -56,7 +85,7 @@ export function Navbar() {
             </Link>
           ))}
           <a
-            href="#contact"
+            href="/#contact"
             className="px-3 py-2 text-sm font-medium text-foreground/80 rounded-md hover:text-primary hover:bg-accent/60 transition-colors"
           >
             Contact
@@ -72,9 +101,49 @@ export function Navbar() {
           >
             {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
+
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:border-primary/50">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="max-w-[100px] truncate">{user.name}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-card border border-border">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer focus:text-primary">
+                  <Link to="/dashboard" className="flex w-full items-center gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span>Owner's Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer focus:text-destructive focus:bg-destructive/10">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/login">
+              <Button size="sm" variant="outline" className="gap-1.5 font-medium border-border/80 text-foreground hover:bg-accent">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Button>
+            </Link>
+          )}
+
           <Link to="/properties" className="hidden sm:inline-flex">
-            <Button className="bg-primary hover:bg-primary/90">List Property</Button>
+            <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium">List Property</Button>
           </Link>
+
           <button
             className="md:hidden grid place-items-center h-10 w-10 rounded-md border border-border"
             onClick={() => setOpen((o) => !o)}
@@ -99,12 +168,33 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <a href="#contact" onClick={() => setOpen(false)} className="py-3 text-sm font-medium">
+            <a href="/#contact" onClick={() => setOpen(false)} className="py-3 text-sm font-medium border-b border-border/60">
               Contact
             </a>
+            {user ? (
+              <>
+                <Link to="/dashboard" onClick={() => setOpen(false)} className="py-3 text-sm font-medium border-b border-border/60 flex items-center gap-2">
+                  <LayoutDashboard className="h-4 w-4" /> Owner's Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    handleLogout();
+                  }}
+                  className="py-3 text-sm font-medium text-destructive flex items-center gap-2 text-left"
+                >
+                  <LogOut className="h-4 w-4" /> Sign Out ({user.name})
+                </button>
+              </>
+            ) : (
+              <Link to="/login" onClick={() => setOpen(false)} className="py-3 text-sm font-medium flex items-center gap-2">
+                <LogIn className="h-4 w-4" /> Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}
     </header>
   );
 }
+
